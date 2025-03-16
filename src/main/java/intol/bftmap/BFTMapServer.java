@@ -1,7 +1,3 @@
-/**
- * BFT Map implementation (server side).
- *
- */
 package intol.bftmap;
 
 import bftsmart.tom.MessageContext;
@@ -11,121 +7,166 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.TreeMap;
+import java.util.*;
 
-public class BFTMapServer<K, V> extends DefaultSingleRecoverable {
+public class BFTMapServer extends DefaultSingleRecoverable {
     private final Logger logger = LoggerFactory.getLogger("bftsmart");
-    private TreeMap<K, V> replicaMap;
+    private TreeMap<Integer, Coin> coinLedger;
+    private int nextCoinId;
 
-    //The constructor passes the id of the server to the super class
     public BFTMapServer(int id) {
-        replicaMap = new TreeMap<>();
+        coinLedger = new TreeMap<>();
+        nextCoinId = 1;
 
-        //turn-on BFT-SMaRt'replica
         new ServiceReplica(id, this, this);
     }
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.println("Use: java BFTMapServer <server id>");
+            System.out.println("Use: java BFTCoinServer <server id>");
             System.exit(-1);
         }
-        new BFTMapServer<Integer, String>(Integer.parseInt(args[0]));
+
+        new BFTMapServer(Integer.parseInt(args[0]));
     }
 
     @Override
     public byte[] appExecuteOrdered(byte[] command, MessageContext msgCtx) {
-        //all operations must be defined here to be invoked by BFT-SMaRt
         try {
-            BFTMapMessage<K,V> response = new BFTMapMessage<>();
-            BFTMapMessage<K,V> request = BFTMapMessage.fromBytes(command);
+            BFTMapMessage request = BFTMapMessage.fromBytes(command);
+            BFTMapMessage response = new BFTMapMessage(request.getType());
+            int sender = msgCtx.getSender();
             BFTMapRequestType cmd = request.getType();
 
-            logger.info("Ordered execution of a {} request from {}", cmd, msgCtx.getSender());
+            logger.info("Ordered execution of a {} request from {}", cmd, sender);
 
             switch (cmd) {
-                case PUT:
-                    V oldValue = replicaMap.put(request.getKey(), request.getValue());
+                case MINT:
+                    int newCoinId = nextCoinId++;
+                    Coin newCoin = new Coin(newCoinId, sender, request.getValue());
 
-                    if (oldValue != null) {
-                        response.setValue(oldValue);
+                    coinLedger.put(newCoinId, newCoin);
+                    response.setCoinId(newCoinId);
+
+                    logger.info("Minted new coin {} for user {}", newCoinId, sender);
+
+                    break;
+                case SPEND:
+                    LinkedList<Integer> coinIds = request.getCoinIds();
+                    int receiver = request.getReceiver();
+                    float value = request.getValue();
+                    float total = 0;
+                    LinkedList<Integer> validCoins = new LinkedList<>();
+
+                    for (int coinId : coinIds) {
+                        Coin coin = coinLedger.get(coinId);
+
+                        if (coin != null && coin.getOwner() == sender) {
+                            total += coin.getValue();
+                            validCoins.add(coinId);
+                        }
                     }
-                    return BFTMapMessage.toBytes(response);
-                case GET:
-                    V ret = replicaMap.get(request.getKey());
 
-                    if (ret != null) {
-                        response.setValue(ret);
+                    if (total >= value) {
+                        for (int coinId : validCoins) {
+                            coinLedger.remove(coinId);
+                        }
+
+                        int newCoinIdReceiver = nextCoinId++;
+                        Coin newCoinReceiver = new Coin(newCoinIdReceiver, receiver, value);
+
+                        coinLedger.put(newCoinIdReceiver, newCoinReceiver);
+
+                        float remainingValue = total - value;
+                        int newCoinIdSender = 0;
+
+                        if (remainingValue > 0) {
+                            newCoinIdSender = nextCoinId++;
+                            Coin newCoinIssuer = new Coin(newCoinIdSender, sender, remainingValue);
+
+                            coinLedger.put(newCoinIdSender, newCoinIssuer);
+                        }
+
+                        response.setCoinId(newCoinIdSender);
+
+                        logger.info("User {} spent {} coins to user {}. Remaining coin: {}", sender, value, receiver, newCoinIdSender);
+                    } else {
+                        response.setCoinId(-1);
+                        logger.warn("User {} tried to spend more coins than owned", sender);
                     }
-                    return BFTMapMessage.toBytes(response);
-                case SIZE:
-                    int size = replicaMap.size();
 
-                    response.setSize(size);
-                    return BFTMapMessage.toBytes(response);
+                    break;
+                default:
+                    break;
             }
 
-            return null;
-        }catch (IOException | ClassNotFoundException ex) {
-            logger.error("Failed to process ordered request", ex);
+            return BFTMapMessage.toBytes(response);
+        } catch (IOException | ClassNotFoundException e) {
+            logger.error("Failed to process ordered request", e);
             return new byte[0];
         }
     }
 
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-        //read-only operations can be defined here to be invoked without running consensus
         try {
-            BFTMapMessage<K,V> response = new BFTMapMessage<>();
-            BFTMapMessage<K,V> request = BFTMapMessage.fromBytes(command);
+            BFTMapMessage request = BFTMapMessage.fromBytes(command);
+            BFTMapMessage response = new BFTMapMessage(request.getType());
+            int sender = msgCtx.getSender();
             BFTMapRequestType cmd = request.getType();
 
-            logger.info("Unordered execution of a {} request from {}", cmd, msgCtx.getSender());
+            logger.info("Unordered execution of a {} request from {}", cmd, sender);
 
             switch (cmd) {
-                case GET:
-                    V ret = replicaMap.get(request.getKey());
+                case MY_COINS:
+                    LinkedList<Coin> ownedCoins = new LinkedList<>();
 
-                    if (ret != null) {
-                        response.setValue(ret);
+                    for (Coin coin : coinLedger.values()) {
+                        if (coin.getOwner() == sender) {
+                            ownedCoins.add(coin);
+                        }
                     }
-                    return BFTMapMessage.toBytes(response);
-                case SIZE:
-                    int size = replicaMap.size();
-                    
-                    response.setSize(size);
-                    return BFTMapMessage.toBytes(response);
+
+                    response.setCoins(ownedCoins);
+
+                    break;
+                default:
+                    break;
             }
-        } catch (IOException | ClassNotFoundException ex) {
-            logger.error("Failed to process unordered request", ex);
+
+            return BFTMapMessage.toBytes(response);
+        } catch (IOException | ClassNotFoundException e) {
+            logger.error("Failed to process unordered request", e);
             return new byte[0];
         }
-        return null;
     }
 
     @Override
     public byte[] getSnapshot() {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ObjectOutput out = new ObjectOutputStream(bos)) {
-            out.writeObject(replicaMap);
+             ObjectOutputStream out = new ObjectOutputStream(bos)) {
+            out.writeObject(coinLedger);
+            out.writeInt(nextCoinId);
+
             out.flush();
             bos.flush();
+
             return bos.toByteArray();
-        } catch (IOException ex) {
-            ex.printStackTrace(); //debug instruction
+        } catch (IOException e) {
+            e.printStackTrace(); //debug instruction
+
             return new byte[0];
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void installSnapshot(byte[] state) {
         try (ByteArrayInputStream bis = new ByteArrayInputStream(state);
-             ObjectInput in = new ObjectInputStream(bis)) {
-            replicaMap = (TreeMap<K, V>) in.readObject();
-        } catch (ClassNotFoundException | IOException ex) {
-            ex.printStackTrace(); //debug instruction
+             ObjectInputStream in = new ObjectInputStream(bis)) {
+            coinLedger = (TreeMap<Integer, Coin>) in.readObject();
+            nextCoinId = in.readInt();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace(); //debug instruction
         }
     }
-
 }

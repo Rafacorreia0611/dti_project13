@@ -6,20 +6,33 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
 
-public class BFTMapMessage<K,V> implements Serializable {
+public class BFTMapMessage implements Serializable {
     private BFTMapRequestType type;
-    private K key;
-    private V value;
-    private HashSet<K> keySet;
-    private int size;
+    private LinkedList<Coin> coins;
+    private int coinId;
+    private float value;
+    private int receiver;
+    private LinkedList<Integer> coinIds;
 
-    public BFTMapMessage() {
+    public BFTMapMessage(BFTMapRequestType type) {
+        this.type = type;
     }
 
-    public static <K,V> byte[] toBytes(BFTMapMessage<K,V> message) throws IOException {
+    public BFTMapMessage(BFTMapRequestType type, float value) {
+        this.type = type;
+        this.value = value;
+    }
+
+    public BFTMapMessage(BFTMapRequestType type, LinkedList<Integer> coinIds, int receiver, float value) {
+        this.type = type;
+        this.coinIds = coinIds;
+        this.receiver = receiver;
+        this.value = value;
+    }
+
+    public static byte[] toBytes(BFTMapMessage message) throws IOException {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         ObjectOutputStream objOut = new ObjectOutputStream(byteOut);
         objOut.writeObject(message);
@@ -30,53 +43,58 @@ public class BFTMapMessage<K,V> implements Serializable {
         return byteOut.toByteArray();
     }
 
-    @SuppressWarnings("unchecked")
-    public static <K,V> BFTMapMessage<K,V> fromBytes(byte[] rep) throws IOException, ClassNotFoundException {
+    public static BFTMapMessage fromBytes(byte[] rep) throws IOException, ClassNotFoundException {
         ByteArrayInputStream byteIn = new ByteArrayInputStream(rep);
         ObjectInputStream objIn = new ObjectInputStream(byteIn);
-        return (BFTMapMessage<K,V>) objIn.readObject();
+        
+        return (BFTMapMessage) objIn.readObject();
     }
 
     public BFTMapRequestType getType() {
         return type;
     }
 
-    public K getKey() {
-        return key;
+    public LinkedList<Coin> getCoins() { 
+        return coins; 
     }
 
-    public V getValue() {
-        return value;
+    public int getCoinId() {
+         return coinId; 
     }
 
-    @SuppressWarnings("unchecked")
-    public void setKey(Object key) {
-        this.key = (K)key;
+    public float getValue() {
+         return value; 
     }
 
-    @SuppressWarnings("unchecked")
-    public void setValue(Object value) {
-        this.value = (V)value;
+    public int getReceiver() {
+         return receiver; 
     }
 
-    @SuppressWarnings("unchecked")
-    public void setKeySet(Object keySet) {
-        this.keySet = new HashSet<>((Set<K>)keySet);
-    }
-
-    public void setSize(int size) {
-        this.size = size;
+    public LinkedList<Integer> getCoinIds() {
+         return coinIds; 
     }
 
     public void setType(BFTMapRequestType type) {
-        this.type = type;
+         this.type = type; 
     }
 
-    public Set<K> getKeySet() {
-        return keySet;
+    public void setCoins(LinkedList<Coin> coins) {
+         this.coins = coins; 
     }
 
-    public int getSize() {
-        return size;
+    public void setCoinId(int coinId) {
+         this.coinId = coinId; 
+    }
+
+    public void setValue(float value) {
+         this.value = value; 
+    }
+
+    public void setReceiver(int receiver) {
+         this.receiver = receiver; 
+    }
+
+    public void setCoinIds(LinkedList<Integer> coinIds) {
+         this.coinIds = coinIds; 
     }
 }

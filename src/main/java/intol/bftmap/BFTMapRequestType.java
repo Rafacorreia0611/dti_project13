@@ -6,6 +6,5 @@
 package intol.bftmap;
 
 public enum BFTMapRequestType {
-    PUT,GET,SIZE,REMOVE,KEYSET
+    MY_COINS,MINT,SPEND
 }
-

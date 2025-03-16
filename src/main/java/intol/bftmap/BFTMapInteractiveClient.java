@@ -1,85 +1,90 @@
-/**
- * BFT Map implementation (interactive client).
- *
- */
 package intol.bftmap;
 
 import java.io.Console;
 import java.io.IOException;
+import java.util.LinkedList;
 
 public class BFTMapInteractiveClient {
 
     public static void main(String[] args) throws IOException {
         int clientId = (args.length > 0) ? Integer.parseInt(args[0]) : 1001;
-        BFTMap<Integer, String> bftMap = new BFTMap<>(clientId);
+        BFTMap bftMap = new BFTMap(clientId);
 
         Console console = System.console();
 
         System.out.println("\nCommands:\n");
-        System.out.println("\tPUT: Insert value into the map");
-        System.out.println("\tGET: Retrieve value from the map");
-        System.out.println("\tSIZE: Retrieve the size of the map");
-        System.out.println("\tREMOVE: Removes the value associated with the supplied key");
-        System.out.println("\tKEYSET: List all keys available in the table");
+        System.out.println("\tMINT: Mint a new coin");
+        System.out.println("\tSPEND: Spend coins");
+        System.out.println("\tMY_COINS: Retrieve owned coins");
         System.out.println("\tEXIT: Terminate this client\n");
 
         while (true) {
             String cmd = console.readLine("\n  > ");
 
-            if (cmd.equalsIgnoreCase("PUT")) {
+            if (cmd.equalsIgnoreCase("MINT")) {
+                float value;
 
-                int key;
                 try {
-                    key = Integer.parseInt(console.readLine("Enter a numeric key: "));
+                    value = Float.parseFloat(console.readLine("Enter coin value: "));
                 } catch (NumberFormatException e) {
-                    System.out.println("\tThe key is supposed to be an integer!\n");
-                    continue;
-                }
-                String value = console.readLine("Enter an alpha-numeric value: ");
-
-                //invokes the op on the servers
-                bftMap.put(key, value);
-
-                System.out.println("\nkey-value pair added to the map\n");
-            } else if (cmd.equalsIgnoreCase("GET")) {
-
-                int key;
-                try {
-                    key = Integer.parseInt(console.readLine("Enter a numeric key: "));
-                } catch (NumberFormatException e) {
-                    System.out.println("\tThe key is supposed to be an integer!\n");
+                    System.out.println("\tInvalid value!\n");
                     continue;
                 }
 
-                //invokes the op on the servers
-                String value = bftMap.get(key);
+                int coinId = bftMap.mint(value);
 
-                System.out.println("\nValue associated with " + key + ": " + value + "\n");
+                if (coinId > 0) {
+                    System.out.println("\nMinted coin with ID: " + coinId + "\n");
+                } else {
+                    System.out.println("\nFailed to mint coin\n");
+                }
+            } else if (cmd.equalsIgnoreCase("SPEND")) {
+                LinkedList<Integer> coinIds = new LinkedList<>();
+                String[] coins = console.readLine("Enter coin IDs (comma-separated): ").split(",");
 
-            } else if (cmd.equalsIgnoreCase("KEYSET")) {
+                for (String coin : coins) {
+                    try {
+                        coinIds.add(Integer.parseInt(coin.trim()));
+                    } catch (NumberFormatException e) {
+                        System.out.println("\tInvalid coin ID!\n");
+                        continue;
+                    }
+                }
 
-                System.out.println("\tYou are supposed to implement this command :)\n");
+                int receiver;
 
-            } else if (cmd.equalsIgnoreCase("REMOVE")) {
+                try {
+                    receiver = Integer.parseInt(console.readLine("Enter receiver ID: "));
+                } catch (NumberFormatException e) {
+                    System.out.println("\tInvalid receiver ID!\n");
+                    continue;
+                }
 
-                System.out.println("\tYou are supposed to implement this command :)\n");
+                float value;
 
-            } else if (cmd.equalsIgnoreCase("SIZE")) {
+                try {
+                    value = Float.parseFloat(console.readLine("Enter amount to spend: "));
+                } catch (NumberFormatException e) {
+                    System.out.println("\tInvalid value!\n");
+                    continue;
+                }
 
-                //invokes the op on the servers
-                int size = bftMap.size();
-
-                System.out.println("\nSize of the map is " + size + "\n");
-
+                boolean success = bftMap.spend(coinIds, receiver, value);
+                
+                if (success) {
+                    System.out.println("\nTransaction successful\n");
+                } else {
+                    System.out.println("\nTransaction failed\n");
+                }
+            } else if (cmd.equalsIgnoreCase("MY_COINS")) {
+                LinkedList<Coin> coins = bftMap.myCoins();
+                System.out.println("\nOwned coins: " + coins + "\n");
             } else if (cmd.equalsIgnoreCase("EXIT")) {
-
                 System.out.println("\tEXIT: Bye bye!\n");
                 System.exit(0);
-
             } else {
                 System.out.println("\tInvalid command :P\n");
             }
         }
     }
-
 }
