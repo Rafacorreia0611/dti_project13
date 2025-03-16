@@ -78,7 +78,12 @@ public class BFTMapInteractiveClient {
                 }
             } else if (cmd.equalsIgnoreCase("MY_COINS")) {
                 LinkedList<Coin> coins = bftMap.myCoins();
-                System.out.println("\nOwned coins: " + coins + "\n");
+
+                System.out.println("\nOwned coins: \n");
+
+                for (Coin coin : coins) {
+                    System.out.println("Coin id: " + coin.getId() + "; value: " + coin.getValue() + "\n");
+                }
             } else if (cmd.equalsIgnoreCase("EXIT")) {
                 System.out.println("\tEXIT: Bye bye!\n");
                 System.exit(0);
