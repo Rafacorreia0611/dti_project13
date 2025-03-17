@@ -18,13 +18,14 @@ public class BFTMapInteractiveClient {
         System.out.println("\tMINT: Mint a new coin");
         System.out.println("\tSPEND: Spend coins");
         System.out.println("\tMY_COINS: Retrieve owned coins");
-        System.out.println("\tEXIT: Terminate this client\n");
         System.out.println("NFT commands:");
         System.out.println("\tMY_NFTS: Retrieve owned NFTs");
         System.out.println("\tMINT_NFT: Mint a new NFT");
         System.out.println("\tSET_NFT_PRICE: Set the price of an NFT");
         System.out.println("\tSEARCH_NFT: Search for an NFT");
         System.out.println("\tBUY_NFT: Buy an NFT\n");
+        System.out.println("\tEXIT: Terminate this client\n");
+
 
         while (true) {
             String cmd = console.readLine("\n  > ");
