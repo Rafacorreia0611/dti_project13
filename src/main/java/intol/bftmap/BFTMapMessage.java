@@ -26,22 +26,6 @@ public class BFTMapMessage implements Serializable {
      public BFTMapMessage() {
      }
 
-     public BFTMapMessage(BFTMapRequestType type) {
-          this.type = type;
-     }
-
-     public BFTMapMessage(BFTMapRequestType type, float value) {
-          this.type = type;
-          this.value = value;
-     }
-
-     public BFTMapMessage(BFTMapRequestType type, LinkedList<Integer> coinIds, int receiver, float value) {
-          this.type = type;
-          this.coinIds = coinIds;
-          this.receiver = receiver;
-          this.value = value;
-     }
-
      public static byte[] toBytes(BFTMapMessage message) throws IOException {
           ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
           ObjectOutputStream objOut = new ObjectOutputStream(byteOut);

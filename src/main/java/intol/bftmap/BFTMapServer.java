@@ -39,21 +39,39 @@ public class BFTMapServer extends DefaultSingleRecoverable {
     public byte[] appExecuteOrdered(byte[] command, MessageContext msgCtx) {
         try {
             BFTMapMessage request = BFTMapMessage.fromBytes(command);
-            BFTMapMessage response = new BFTMapMessage(request.getType());
+            BFTMapMessage response = new BFTMapMessage();
             int sender = msgCtx.getSender();
             BFTMapRequestType cmd = request.getType();
 
             logger.info("Ordered execution of a {} request from {}", cmd, sender);
 
             switch (cmd) {
+                case MY_COINS:
+                    LinkedList<Coin> ownedCoins = new LinkedList<>();
+
+                    for (Coin coin : coinLedger.values()) {
+                        if (coin.getOwner() == sender) {
+                            ownedCoins.add(coin);
+                        }
+                    }
+
+                    response.setCoins(ownedCoins);
+
+                    break;
                 case MINT:
-                    int newCoinId = nextCoinId++;
-                    Coin newCoin = new Coin(newCoinId, sender, request.getValue());
+                    if (sender != 4 || request.getValue() <= 0 || request.getValue() > Float.MAX_VALUE) {
+                        response.setCoinId(-1);
+                        logger.warn("User {} tried to mint a coin", sender);
+                        break;
+                    }else{
+                        int newCoinId = nextCoinId++;
+                        Coin newCoin = new Coin(newCoinId, sender, request.getValue());
 
-                    coinLedger.put(newCoinId, newCoin);
-                    response.setCoinId(newCoinId);
+                        coinLedger.put(newCoinId, newCoin);
+                        response.setCoinId(newCoinId);
 
-                    logger.info("Minted new coin {} for user {}", newCoinId, sender);
+                        logger.info("Minted new coin {} for user {}", newCoinId, sender);
+                    }
 
                     break;
                 case SPEND:
@@ -62,6 +80,20 @@ public class BFTMapServer extends DefaultSingleRecoverable {
                     float value = request.getValue();
                     float total = 0;
                     LinkedList<Integer> validCoins = new LinkedList<>();
+
+                    if(receiver == sender){
+                        response.setCoinId(-1);
+                        logger.warn("User {} tried to spend coins to himself", sender);
+                        break;
+                    }else if(value <= 0){
+                        response.setCoinId(-1);
+                        logger.warn("User {} tried to spend non-positive value", sender);
+                        break;
+                    }else if(value > Float.MAX_VALUE){
+                        response.setCoinId(-1);
+                        logger.warn("User {} tried to spend value greater than Float.MAX_VALUE", sender);
+                        break;
+                    }
 
                     for (int coinId : coinIds) {
                         Coin coin = coinLedger.get(coinId);
@@ -164,9 +196,9 @@ public class BFTMapServer extends DefaultSingleRecoverable {
 
                     break;
                 case SEARCH_NFT:
-                    String text = request.getText();
+                    String text = request.getText().toLowerCase(); 
                     LinkedList<NFT> foundNFTs = new LinkedList<>();
-
+                
                     for (LinkedList<NFT> nfts : nftLedger.values()) {
                         for (NFT nft : nfts) {
                             if (nft.getName().toLowerCase().contains(text)) {
@@ -174,7 +206,7 @@ public class BFTMapServer extends DefaultSingleRecoverable {
                             }
                         }
                     }
-
+                
                     response.setNfts(foundNFTs);
                     break;
 
@@ -194,6 +226,13 @@ public class BFTMapServer extends DefaultSingleRecoverable {
                                 break;
                             }
                         }
+                    }
+
+                    if (nftOwner == sender) {
+                        response.setCoinId(-1);
+                        logger.warn("User {} tried to buy his own NFT {}", sender, nftIdBuy);
+                        break;
+                        
                     }
 
                     if (nftPriceBuy > 0) {
@@ -266,7 +305,7 @@ public class BFTMapServer extends DefaultSingleRecoverable {
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
         try {
             BFTMapMessage request = BFTMapMessage.fromBytes(command);
-            BFTMapMessage response = new BFTMapMessage(request.getType());
+            BFTMapMessage response = new BFTMapMessage();
             int sender = msgCtx.getSender();
             BFTMapRequestType cmd = request.getType();
 
@@ -297,19 +336,19 @@ public class BFTMapServer extends DefaultSingleRecoverable {
                     break;
 
                 case SEARCH_NFT:
-                    String text = request.getText();
+                    String text = request.getText().toLowerCase(); 
                     LinkedList<NFT> foundNFTs = new LinkedList<>();
-
+                
                     for (LinkedList<NFT> nfts : nftLedger.values()) {
                         for (NFT nft : nfts) {
-                            if (nft.getName().contains(text)) {
+                            if (nft.getName().toLowerCase().contains(text)) {
                                 foundNFTs.add(nft);
                             }
                         }
                     }
-
+                
                     response.setNfts(foundNFTs);
-                    break;  
+                    break; 
                 default:
                     break;
             }

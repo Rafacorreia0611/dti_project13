@@ -20,7 +20,8 @@ public class BFTMap {
         byte[] rep;
 
         try {
-            BFTMapMessage request = new BFTMapMessage(BFTMapRequestType.MY_COINS);
+            BFTMapMessage request = new BFTMapMessage();
+            request.setType(BFTMapRequestType.MY_COINS);
             
             // Invokes BFT-SMaRt unordered request
             rep = serviceProxy.invokeUnordered(BFTMapMessage.toBytes(request));
@@ -49,7 +50,9 @@ public class BFTMap {
         byte[] rep;
 
         try {
-            BFTMapMessage request = new BFTMapMessage(BFTMapRequestType.MINT, value);
+            BFTMapMessage request = new BFTMapMessage();
+            request.setType(BFTMapRequestType.MINT);
+            request.setValue(value);
             
             // Invokes BFT-SMaRt ordered request
             rep = serviceProxy.invokeOrdered(BFTMapMessage.toBytes(request));
@@ -74,32 +77,36 @@ public class BFTMap {
         }
     }
     
-    public boolean spend(LinkedList<Integer> coinIds, int receiver, float value) {
+    public int spend(LinkedList<Integer> coinIds, int receiver, float value) {
         byte[] rep;
         
         try {
-            BFTMapMessage request = new BFTMapMessage(BFTMapRequestType.SPEND, coinIds, receiver, value);
+            BFTMapMessage request = new BFTMapMessage();
+            request.setType(BFTMapRequestType.SPEND);
+            request.setCoinIds(coinIds);
+            request.setReceiver(receiver);
+            request.setValue(value);
             
             // Invokes BFT-SMaRt ordered request
             rep = serviceProxy.invokeOrdered(BFTMapMessage.toBytes(request));
         } catch (IOException e) {
             logger.error("Failed to send SPEND request", e);
 
-            return false;
+            return -1;
         }
 
         if (rep.length == 0) {
-            return false;
+            return -1;
         }
         
         try {
             BFTMapMessage response = BFTMapMessage.fromBytes(rep);
 
-            return response.getCoinId() > 0;
+            return response.getCoinId();
         } catch (ClassNotFoundException | IOException ex) {
             logger.error("Failed to deserialize response of SPEND request", ex);
 
-            return false;
+            return -1;
         }
     }
 
