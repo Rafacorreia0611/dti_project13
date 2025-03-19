@@ -3,7 +3,6 @@ package intol.bftmap;
 import java.io.Console;
 import java.io.IOException;
 import java.util.LinkedList;
-import java.util.List;
 
 public class BFTMapInteractiveClient {
 
@@ -118,7 +117,7 @@ public class BFTMapInteractiveClient {
                 if (nftId > 0) {
                     System.out.println("\nMinted NFT with ID: " + nftId + "\n");
                 } else {
-                    System.out.println("\nFailed to mint NFT\n");
+                    System.out.println("\nFailed to mint NFT, name already exists\n");
                 }
 
             } else if (cmd.equalsIgnoreCase("SET_NFT_PRICE")) {

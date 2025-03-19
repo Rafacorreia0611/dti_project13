@@ -116,6 +116,17 @@ public class BFTMapServer extends DefaultSingleRecoverable {
                 case MINT_NFT:
                     NFT newNft = new NFT(nextNftId, sender, request.getNftName(), request.getNftUri(), request.getNftValue());
 
+                    for (LinkedList<NFT> nfts : nftLedger.values()) {
+                        for (NFT nft : nfts) {
+                            if (nft.getName().equals(newNft.getName())) {
+                                response.setNftId(-1);
+                                logger.warn("User {} tried to mint NFT with existing name {}", sender, newNft.getName());
+
+                                return BFTMapMessage.toBytes(response);
+                            }
+                        }
+                    }
+
                     if (!nftLedger.containsKey(sender)) {
                         nftLedger.put(sender, new LinkedList<>());
                     }
