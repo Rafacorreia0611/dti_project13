@@ -14,22 +14,22 @@ public class BFTMapInteractiveClient {
 
         System.out.println("\nCommands:\n");
         System.out.println("Coin commands:");
-        System.out.println("\tMINT: Mint a new coin");
-        System.out.println("\tSPEND: Spend coins");
-        System.out.println("\tMY_COINS: Retrieve owned coins");
+        System.out.println("\tMY_COINS(mc): Retrieve owned coins\n");
+        System.out.println("\tMINT(m): Mint a new coin");
+        System.out.println("\tSPEND(s): Spend coins");
         System.out.println("NFT commands:");
-        System.out.println("\tMY_NFTS: Retrieve owned NFTs");
-        System.out.println("\tMINT_NFT: Mint a new NFT");
-        System.out.println("\tSET_NFT_PRICE: Set the price of an NFT");
-        System.out.println("\tSEARCH_NFT: Search for an NFT");
-        System.out.println("\tBUY_NFT: Buy an NFT\n");
+        System.out.println("\tMY_NFTS(myn): Retrieve owned NFTs\n");
+        System.out.println("\tMINT_NFT(mtn): Mint a new NFT");
+        System.out.println("\tSET_NFT_PRICE(snp): Set the price of an NFT");
+        System.out.println("\tSEARCH_NFT(sn): Search for NFTs");
+        System.out.println("\tBUY_NFT(bn): Buy an NFT");
         System.out.println("\tEXIT: Terminate this client\n");
 
 
         while (true) {
             String cmd = console.readLine("\n  > ");
 
-            if (cmd.equalsIgnoreCase("MINT")) {
+            if (cmd.equalsIgnoreCase("MINT") || cmd.equalsIgnoreCase("M")) {
                 float value;
 
                 try {
@@ -46,7 +46,7 @@ public class BFTMapInteractiveClient {
                 } else {
                     System.out.println("\nFailed to mint coin\n");
                 }
-            } else if (cmd.equalsIgnoreCase("SPEND")) {
+            } else if (cmd.equalsIgnoreCase("SPEND") || cmd.equalsIgnoreCase("S")) {
                 LinkedList<Integer> coinIds = new LinkedList<>();
                 String[] coins = console.readLine("Enter coin IDs (comma-separated): ").split(",");
 
@@ -84,7 +84,7 @@ public class BFTMapInteractiveClient {
                 } else {
                     System.out.println("\nTransaction failed\n");
                 }
-            } else if (cmd.equalsIgnoreCase("MY_COINS")) {
+            } else if (cmd.equalsIgnoreCase("MY_COINS") || cmd.equalsIgnoreCase("MC")) {
                 LinkedList<Coin> coins = bftMap.myCoins();
 
                 System.out.println("\nOwned coins: \n");
@@ -93,7 +93,7 @@ public class BFTMapInteractiveClient {
                     System.out.println("Coin id: " + coin.getId() + "; value: " + coin.getValue() + "\n");
                 }
 
-            } else if (cmd.equalsIgnoreCase("MY_NFTS")) {
+            } else if (cmd.equalsIgnoreCase("MY_NFTS") || cmd.equalsIgnoreCase("MYN")) {
                 LinkedList<NFT> nfts = bftMap.myNFTs();
 
                 if (!nfts.isEmpty()) {
@@ -106,7 +106,7 @@ public class BFTMapInteractiveClient {
                     System.out.println("\nNo owned NFTs\n");
                 }
 
-            } else if (cmd.equalsIgnoreCase("MINT_NFT")) {
+            } else if (cmd.equalsIgnoreCase("MINT_NFT") || cmd.equalsIgnoreCase("MTN")) {
                 
                 String name = console.readLine("Enter NFT name: ");
                 String uri = console.readLine("Enter NFT URI: ");
@@ -120,7 +120,7 @@ public class BFTMapInteractiveClient {
                     System.out.println("\nFailed to mint NFT, name already exists\n");
                 }
 
-            } else if (cmd.equalsIgnoreCase("SET_NFT_PRICE")) {
+            } else if (cmd.equalsIgnoreCase("SET_NFT_PRICE") || cmd.equalsIgnoreCase("SNP")) {
                 int nftId = Integer.parseInt(console.readLine("Enter NFT ID: "));
                 float value = Float.parseFloat(console.readLine("Enter new NFT value: "));
 
@@ -132,7 +132,7 @@ public class BFTMapInteractiveClient {
                     System.out.println("\nFailed to update NFT price to: " + value + "\n");
                 }
 
-            } else if (cmd.equalsIgnoreCase("SEARCH_NFT")) {
+            } else if (cmd.equalsIgnoreCase("SEARCH_NFT") || cmd.equalsIgnoreCase("SN")) {
                 String text = console.readLine("Enter search text: ");
 
                 LinkedList<NFT> nfts = bftMap.search_nft(text);
@@ -147,7 +147,7 @@ public class BFTMapInteractiveClient {
                     System.out.println("\nNo NFTs found\n");
                 }
 
-            } else if (cmd.equalsIgnoreCase("BUY_NFT")) {
+            } else if (cmd.equalsIgnoreCase("BUY_NFT") || cmd.equalsIgnoreCase("BN")) {
                 int nftId = Integer.parseInt(console.readLine("Enter NFT ID: "));
                 String[] coinIds = console.readLine("Enter coin IDs (comma-separated): ").split(",");
 
