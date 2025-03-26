@@ -1,7 +1,7 @@
-Every thing asked in the project description is implemented.
+Everything asked in the project description was implemented.
 
 ## Compile
-In the root directory of the project, run the following command on macos `./gradlew installDist` and on windows `gradlew installDist`. The required jar
+In the root directory of the project, run the following command on macOs `./gradlew installDist` and on windows `gradlew installDist`. The required jar
 files and default configuration files will be available in the `build/install/library` directory. The source code that we developed is in the `src/main/java/intol/bftmap` directory.
 
 ## Run
@@ -16,4 +16,4 @@ Once the replicas are running, and the message `Ready to process operations` is 
 ```
 ./smartrun.sh intol.bftmap.BFTMapInteractiveClient <client_id>
 ```
-The client_id is an integer value that is used to identify the client(use id 4 onwars to run the clients). The client can be run multiple times with different client_id values(only Client with id 4 can mint coins).
+The client_id is an integer value that is used to identify the client (use id 4 onwards to run the clients). The client can be run multiple times with different client_id values (Only client with id 4 can mint coins).
