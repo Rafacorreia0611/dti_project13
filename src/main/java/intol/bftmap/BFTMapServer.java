@@ -28,7 +28,7 @@ public class BFTMapServer extends DefaultSingleRecoverable {
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.println("Use: java BFTCoinServer <server id>");
+            System.out.println("Use: ./smartrun.sh intol.bftmap.BFTMapServer <replica_id>");
             System.exit(-1);
         }
 
